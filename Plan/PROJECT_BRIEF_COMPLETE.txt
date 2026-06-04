@@ -1,0 +1,583 @@
+================================================================================
+  DOKUMEN BRIEF PROYEK LENGKAP
+  Website Tes 4 Persona — Vundiego
+  Versi: 1.0
+  Disusun: 04 Juni 2026
+  Status: PRE-IMPLEMENTATION (Siap untuk dibuat Implementation Plan)
+================================================================================
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 1 — GAMBARAN UMUM PROYEK
+────────────────────────────────────────────────────────────────────────────────
+
+NAMA PROYEK     : Website Tes 4 Persona Vundiego
+TUJUAN UTAMA    : Platform tes kepribadian berbasis 4 elemen sebagai alat
+                  lead generation dan konversi penjualan parfum Vundiego.
+BRAND INDUK     : Vun Diego (Maison de Parfum — Quiet Luxury)
+WEBSITE BRAND   : https://vundiego.com
+TARGET DOMAIN   : (belum ditentukan, dokumen plan menyebut vundiego-test.com)
+BAHASA          : Bahasa Indonesia (istilah teknis boleh Bahasa Inggris)
+TARGET LAUNCH   : Belum ditentukan
+
+KONSEP INTI:
+  Pengguna mengikuti tes kepribadian 25 soal, mendapatkan hasil berupa
+  "Persona" mereka (berbasis 4 elemen: Api, Air, Angin, Tanah), lalu
+  mendapatkan rekomendasi varian parfum Vundiego yang paling sesuai dengan
+  kepribadian mereka. Platform ini berfungsi ganda: sebagai pengumpul data
+  pelanggan (email/lead) sekaligus mendorong konversi pembelian parfum.
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 2 — MAPPING 4 ELEMEN & PARFUM
+────────────────────────────────────────────────────────────────────────────────
+
+Dari 7 produk parfum Vundiego (Nostalgia, Her, Alvorada, Sanguine, Melancholic,
+Phlegmatic, Choleric), hanya 4 yang digunakan untuk platform ini:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  ELEMEN     │  PARFUM       │  KARAKTERISTIK PARFUM                    │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  API (🔥)   │  Choleric     │  Bold, Intense, Passionate               │
+  │  AIR (💧)   │  Melancholic  │  Deep, Poetic, Introspective             │
+  │  ANGIN (🌬) │  Sanguine     │  Bright, Zesty, Uplifting                │
+  │  TANAH (🌿) │  Phlegmatic   │  Calm, Soothing, Balanced                │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+CATATAN: Mapping ini bersifat proposed/logis berdasarkan karakteristik parfum.
+         Perlu konfirmasi final dari tim Vundiego sebelum konten ditulis.
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 3 — FITUR & ALUR PENGGUNA (USER JOURNEY)
+────────────────────────────────────────────────────────────────────────────────
+
+3.1  HOMEPAGE (Halaman Utama)
+─────────────────────────────
+  Visual:
+    - Latar belakang animasi interaktif 4 elemen (Api, Air, Angin, Tanah)
+    - Kesan dinamis, premium, dan immersive
+    - Menggunakan Three.js / Spline untuk efek 3D / partikel elemen
+
+  Komponen Utama:
+    - CTA Button utama: "Cek Persona Kamu Secara Gratis"
+    - 4 Kartu Statistik Publik (real-time):
+        1. Total Pengunjung Website     → session tracking / page views
+        2. Total User yang Telah Tes    → prisma.testResult.count()
+        3. Total Pembelian Parfum       → input MANUAL oleh admin (bukan payment gateway)
+        4. Elemen Paling Dominan        → agregasi personaPrimer dari database real-time
+
+3.2  GERBANG AUTENTIKASI — LEAD GENERATION
+───────────────────────────────────────────
+  - Pengguna WAJIB mendaftar/login sebelum dapat mengakses tes
+  - Metode login yang tersedia:
+      a) Email + Password (registrasi manual)
+      b) Login dengan Google (Google OAuth2)
+  - Setelah autentikasi berhasil → Loading Screen tematik animasi elemen
+    sebelum soal pertama muncul
+  - Data email pengguna tersimpan di database sebagai lead marketing
+
+3.3  ANTARMUKA TES (Test Interface)
+────────────────────────────────────
+  Konsep Visual:
+    - Tampilan tumpukan kartu/folder fisik di tengah layar (seperti Saff & Co)
+    - Setiap jawaban dipilih → kartu/folder paling atas "meluncur" ke belakang
+      tumpukan → soal berikutnya muncul
+    - Animasi: Framer Motion untuk transisi kartu
+
+  Struktur Soal (TOTAL 25 SOAL):
+    - 24 Soal Kepribadian (Pilihan Ganda):
+        * Diacak dari bank soal utama
+        * WAJIB menjaga proporsi SEIMBANG: 6 soal API + 6 AIR + 6 ANGIN + 6 TANAH
+        * Tidak boleh ada elemen yang mendominasi kemunculan soal
+        * Setiap pilihan jawaban bernilai +1 untuk elemen tertentu
+
+    - 1 Soal Penutup (Soal ke-25):
+        * Pertanyaan survei kualitatif
+        * Contoh: "Dari mana kamu mengetahui 4 Persona Vundiego?"
+        * Contoh: "Apakah hasilnya relate denganmu?"
+        * Jawaban disimpan di field surveySource di database
+
+3.4  SISTEM SKORING (Gaya MBTI)
+────────────────────────────────
+  - Setiap pilihan jawaban memberi +1 poin untuk elemen yang dituju
+  - Setelah 24 soal, NestJS menjumlahkan total poin per elemen
+  - PERSONA PRIMER   = elemen dengan skor tertinggi
+  - PERSONA SEKUNDER = elemen dengan skor tertinggi kedua
+  - TIE-BREAKER: Jika skor sama → sistem pilih berdasarkan hierarki default
+    backend atau urutan abjad yang disepakati (untuk menghindari kegagalan sistem)
+  - Contoh skor: API=8, AIR=6, ANGIN=6, TANAH=4
+    → Primer: API, Sekunder: AIR (atau ANGIN jika tie-breaker alphabetical)
+
+3.5  LAYAR HASIL INSTAN (Teaser Screen)
+─────────────────────────────────────────
+  - Muncul SEGERA setelah pengguna mengirim jawaban soal ke-25
+  - Menampilkan persona utama secara ringkas
+  - Contoh teks: "Selamat! Persona utamamu adalah API. Cek email kamu
+    sekarang untuk melihat rapot lengkap, radar chart, dan rekomendasi
+    parfumnya!"
+  - Di saat yang sama, sistem memicu pengiriman email otomatis
+
+3.6  EMAIL OTOMATIS (Brevo Automation)
+────────────────────────────────────────
+  - NestJS memicu Brevo API untuk kirim email ke alamat pengguna
+  - Isi email: tautan unik menuju halaman rapot
+    Format: https://[domain]/report/[id-test-result]
+  - Link berlaku SELAMA 30 HARI sejak diterbitkan
+  - Setelah 30 hari: pengguna harus login ke website untuk melihat history
+
+3.7  HALAMAN RAPOT DIGITAL
+───────────────────────────
+  Akses:
+    - Via link di email (berlaku 30 hari, bisa diakses TANPA login)
+    - Via login ke website → lihat history semua hasil tes
+
+  Konten Rapot (ditarik dari API NestJS):
+    a) RADAR CHART — visualisasi grafis skor 4 elemen pengguna
+    b) PERSONA PRIMER:
+        - Nama elemen & nama parfum
+        - Deskripsi karakter: kelebihan (descriptionPlus)
+        - Deskripsi karakter: kekurangan (descriptionMinus)
+        - Rekomendasi spesifik varian parfum Vundiego
+    c) PERSONA SEKUNDER:
+        - Struktur yang sama dengan blok Persona Primer
+    d) TOMBOL KONVERSI PENJUALAN:
+        - Ikon TikTok Shop → link langsung ke halaman produk di TikTok
+        - Ikon Instagram Shopping → link langsung ke profil/produk Instagram
+        - Ikon Shopee → link langsung ke toko Vundiego di Shopee
+
+3.8  FITUR TAMBAHAN (Disepakati dalam Diskusi)
+───────────────────────────────────────────────
+  a) FORM FEEDBACK:
+     - Formulir penilaian pengalaman tes dan relevansi hasil
+     - Tampil di halaman rapot atau sebagai pop-up setelah melihat hasil
+
+  b) SHARE KE SOCIAL MEDIA:
+     - Pengguna bisa share hasil persona ke Instagram Story, TikTok, dll
+     - Format: Kartu visual berisi nama persona + elemen + parfum rekomendasi
+     - Berfungsi sebagai word-of-mouth marketing organik
+
+3.9  RIWAYAT TES (Test History)
+────────────────────────────────
+  - Pengguna BOLEH mengulang tes kapan saja
+  - Semua hasil tes tersimpan di database (tidak ditimpa)
+  - Pengguna bisa melihat seluruh riwayat tes via halaman profil/history
+    setelah login
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 4 — SISTEM MANAJEMEN BACKEND (ADMIN DASHBOARD)
+────────────────────────────────────────────────────────────────────────────────
+
+4.1  AKSES ADMIN
+─────────────────
+  - Hanya 1 admin (owner/founder Vundiego)
+  - Tidak ada multi-role atau manajemen admin lain
+  - Admin login melalui halaman tersendiri (terpisah dari halaman user)
+
+4.2  DASBOR ANALITIK UTAMA
+───────────────────────────
+  - Grafik perkembangan pendaftar harian
+  - Total konversi (jumlah tes selesai)
+  - Pie chart / grafik elemen terpopuler (perbandingan personaPrimer)
+  - Kolom input angka penjualan parfum:
+      * Admin memasukkan angka secara manual
+      * Angka ini tampil sebagai "Total Pembelian Parfum" di Homepage
+      * BUKAN terintegrasi dengan payment gateway apapun
+
+4.3  MANAJEMEN BANK SOAL (CRUD)
+────────────────────────────────
+  Fitur:
+    - Buat soal baru (Create)
+    - Lihat daftar soal (Read)
+    - Edit soal yang ada (Update)
+    - Hapus soal (Delete)
+    - Toggle aktif/nonaktif soal (field isActive)
+
+  Aturan:
+    - Setiap soal WAJIB diberi label elemen (API / AIR / ANGIN / TANAH)
+    - Setiap soal memiliki beberapa opsi jawaban
+    - Setiap opsi jawaban menentukan elemen mana yang mendapat +1 (targetType)
+    - Label elemen wajib ada agar algoritma pengacakan 6-6-6-6 berjalan benar
+
+4.4  MANAJEMEN RAPOT DINAMIS (CMS)
+────────────────────────────────────
+  a) EDIT TEKS PER ELEMEN:
+     - Admin bisa mengubah teks kelebihan (descriptionPlus) per elemen
+     - Admin bisa mengubah teks kekurangan (descriptionMinus) per elemen
+     - Perubahan langsung berdampak real-time pada semua rapot yang ditampilkan
+
+  b) UPLOAD GAMBAR LATAR RAPOT:
+     - Admin bisa upload gambar background baru untuk halaman rapot per elemen
+     - Alur: Admin upload → NestJS teruskan ke Supabase Storage
+             → Dapatkan URL publik → Simpan URL ke tabel ReportTemplate di DB
+     - Berguna untuk sinkronisasi dengan kampanye pemasaran yang berganti-ganti
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 5 — ARSITEKTUR TEKNOLOGI (TECH STACK)
+────────────────────────────────────────────────────────────────────────────────
+
+  LAYER               TEKNOLOGI                         KETERANGAN
+  ──────────────────────────────────────────────────────────────────────────────
+  Frontend Framework  React                             Komponen interaktif & SPA
+  Animation Engine    Three.js / Spline                 Animasi 4 elemen (homepage)
+  Motion Library      Framer Motion                     Transisi kartu tes, UI anim
+  Backend Framework   NestJS (TypeScript)               Arsitektur modular
+  Database            PostgreSQL                        Cloud-hosted (Neon.tech ATAU Supabase)
+  ORM                 Prisma ORM                        Type-safe query builder
+  Authentication      Google OAuth2                     @nestjs/passport + passport-google-oauth20
+                      Email+Password                    Custom auth (JWT)
+  JWT                 JSON Web Token                    Session management setelah login
+  Email Engine        Brevo API                         Via @nestjs-modules/mailer
+  Media Storage       Supabase Storage                  Aset visual rapot (upload admin)
+  Frontend Hosting    Vercel                            CD/CI langsung dari repo
+  Backend Hosting     Railway ATAU Render               Hosting NestJS server
+  ──────────────────────────────────────────────────────────────────────────────
+
+ANIMASI GSAP & REFERENSI VISUAL:
+  Website brand Vundiego (vundiego.com) sudah menggunakan:
+  - GSAP + ScrollTrigger (versi 3.12.7)
+  - Lenis Smooth Scroll (versi 1.3.23)
+  - Font Awesome (icon)
+  Platform tes TIDAK harus menggunakan stack yang sama, tapi WAJIB
+  mempertahankan estetika visual yang konsisten dengan brand.
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 6 — SKEMA DATABASE (PRISMA ORM)
+────────────────────────────────────────────────────────────────────────────────
+
+enum ElementType {
+  API
+  AIR
+  ANGIN
+  TANAH
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  name        String
+  googleId    String?      @unique       // Null jika daftar manual
+  password    String?                    // Null jika login via Google
+  createdAt   DateTime     @default(now())
+  testResults TestResult[]
+}
+
+model Question {
+  id        String         @id @default(uuid())
+  text      String
+  element   ElementType                  // Label elemen untuk soal ini
+  isActive  Boolean        @default(true)
+  options   AnswerOption[]
+  createdAt DateTime       @default(now())
+}
+
+model AnswerOption {
+  id          String      @id @default(uuid())
+  questionId  String
+  question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text        String
+  targetType  ElementType // Elemen yang mendapat +1 jika opsi ini dipilih
+}
+
+model TestResult {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  scoreApi        Int
+  scoreAir        Int
+  scoreAngin      Int
+  scoreTanah      Int
+  personaPrimer   ElementType
+  personaSekunder ElementType
+  surveySource    String      // Jawaban soal ke-25 (asal informasi)
+  surveyRelate    String?     // Jawaban "apakah hasilnya relate?" (opsional)
+  feedbackRating  Int?        // Form feedback: rating 1-5 (opsional)
+  feedbackText    String?     // Form feedback: komentar teks (opsional)
+  createdAt       DateTime    @default(now())
+  reportToken     String      @unique      // Token unik untuk link rapot via email
+  reportTokenExp  DateTime                 // Tanggal kadaluarsa token (30 hari)
+}
+
+model SystemMetric {
+  id               Int @id @default(1)
+  manualSalesCount Int @default(0)  // Angka penjualan diupdate manual oleh admin
+}
+
+model ReportTemplate {
+  id                ElementType @id  // API / AIR / ANGIN / TANAH
+  parfumName        String           // Nama parfum (Choleric/Melancholic/dll)
+  descriptionPlus   String      @db.Text  // Kelebihan persona
+  descriptionMinus  String      @db.Text  // Kekurangan persona
+  backgroundImage   String           // URL dari Supabase Storage
+  shopeeLink        String?          // Link produk di Shopee
+  tokopediaLink     String?          // Link produk di TikTok Shop
+  instagramLink     String?          // Link produk di Instagram
+  updatedAt         DateTime    @updatedAt
+}
+
+CATATAN SKEMA:
+  - Field "element" ditambahkan ke model Question (tidak ada di dokumen asli)
+    agar query pengacakan 6-6-6-6 lebih efisien di backend
+  - Field "password" ditambahkan ke User untuk mendukung auth email+password
+  - Field "reportToken" dan "reportTokenExp" ditambahkan ke TestResult untuk
+    mendukung fitur link rapot 30 hari tanpa login
+  - Field feedback (feedbackRating, feedbackText) ditambahkan untuk fitur
+    Form Feedback yang disepakati dalam diskusi
+  - Link e-commerce dipindah ke ReportTemplate agar admin bisa update kapanpun
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 7 — IDENTITAS VISUAL & BRAND GUIDELINES
+────────────────────────────────────────────────────────────────────────────────
+
+Sumber referensi: https://vundiego.com (website brand utama Vundiego)
+
+ESTETIKA BRAND:
+  - Gaya       : "Quiet Luxury" — elegan, minimalis, premium, tidak berlebihan
+  - Mood       : Tenang, berkelas, artistik, sophisticated
+  - Vibe       : Seperti maison parfum Eropa (Diptyque, Maison Margiela vibe)
+
+PALET WARNA (dari vundiego.com):
+  - Background : #f9f8f6 (cream/off-white warm)
+  - Primary    : #1a1a1a (near-black)
+  - Text       : Gelap di atas terang, putih di atas gelap
+  - Accent     : Subtle gold/warm tones (tersirat dari estetika luxury)
+
+TIPOGRAFI (dari vundiego.com):
+  - Gaya       : Clean sans-serif, berspasi (letter-spacing tinggi)
+  - Label kecil: Uppercase, mono-style, tracked (--mono-label style)
+  - Heading    : Serif atau sans-serif bersih berukuran besar
+
+ANIMASI & INTERAKSI (dari vundiego.com):
+  - GSAP + ScrollTrigger untuk reveal animasi scroll
+  - Lenis untuk smooth scroll yang halus
+  - Parallax pada gambar editorial
+  - Preloader animasi huruf (satu per satu) saat pertama buka
+  - Scroll progress bar di bagian atas halaman
+
+ELEMEN VISUAL PER PERSONA (Usulan Palette):
+  - API (🔥 Choleric)     : Merah bara, oranye gelap, amber — Bold & passionate
+  - AIR (💧 Melancholic)  : Biru tua, teal gelap, abu — Deep & introspective
+  - ANGIN (🌬 Sanguine)   : Kuning lembut, putih cerah, sage — Bright & uplifting
+  - TANAH (🌿 Phlegmatic) : Hijau tua, coklat tanah, krem — Calm & balanced
+
+CATATAN: Palette per elemen harus tetap dalam range "quiet luxury" —
+         tidak boleh terlalu mencolok/saturasi tinggi.
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 8 — LOGIKA SISTEM END-TO-END
+────────────────────────────────────────────────────────────────────────────────
+
+ALUR LENGKAP USER:
+
+  [1] User membuka homepage
+        → Melihat animasi 4 elemen + 4 kartu statistik
+        → Klik "Cek Persona Kamu Secara Gratis"
+
+  [2] Gerbang Autentikasi
+        → Pilih: Email+Password ATAU Login Google
+        → NestJS proses OAuth callback (jika Google) / validasi password
+        → Simpan/update data user di PostgreSQL
+        → Keluarkan JWT Token
+        → Tampilkan Loading Screen tematik
+
+  [3] Antarmuka Tes
+        → NestJS tarik 24 soal dari bank soal (6 per elemen, diacak)
+        → Tambahkan 1 soal penutup survei → total 25 soal
+        → User menjawab soal satu per satu (animasi kartu folder)
+        → Frontend kumpulkan jawaban
+
+  [4] Submit & Skoring
+        → Frontend kirim semua jawaban ke NestJS API
+        → NestJS hitung skor: API=?, AIR=?, ANGIN=?, TANAH=?
+        → Tentukan Persona Primer (skor tertinggi)
+        → Tentukan Persona Sekunder (skor tertinggi kedua)
+        → Tangani tie-breaker jika ada
+        → Generate reportToken unik + set expiry 30 hari
+        → Simpan TestResult ke PostgreSQL
+        → Trigger Brevo API → kirim email dengan link rapot
+
+  [5] Teaser Screen
+        → Tampilkan langsung di layar: persona utama + instruksi cek email
+
+  [6] User buka email → klik link rapot
+        → Backend validasi reportToken (masih valid/belum expired?)
+        → Jika valid → fetch data rapot dari database
+        → Render halaman rapot:
+            * Radar Chart
+            * Persona Primer (deskripsi + parfum)
+            * Persona Sekunder (deskripsi + parfum)
+            * Tombol CTA Beli (TikTok, Instagram, Shopee)
+            * Tombol Share ke Social Media
+            * Form Feedback
+
+  [7] Setelah 30 hari
+        → Link rapot expired → user diarahkan ke halaman login
+        → Setelah login → user bisa lihat history semua tes di profil
+
+
+ALUR ADMIN:
+
+  [1] Admin login ke /admin (halaman terpisah)
+  [2] Dashboard Analitik → pantau statistik keseluruhan
+  [3] Manajemen Soal → CRUD pertanyaan, tandai elemen, atur opsi jawaban
+  [4] Update Angka Penjualan → input manual angka parfum terjual
+  [5] Manajemen Rapot → edit teks persona + upload foto latar per elemen
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 9 — KEPUTUSAN TEKNIS PENTING
+────────────────────────────────────────────────────────────────────────────────
+
+1. PENGACAKAN SOAL:
+   Backend (NestJS) wajib menarik soal dengan query terpisah per elemen:
+   - SELECT 6 random FROM Question WHERE element=API AND isActive=true
+   - SELECT 6 random FROM Question WHERE element=AIR AND isActive=true
+   - SELECT 6 random FROM Question WHERE element=ANGIN AND isActive=true
+   - SELECT 6 random FROM Question WHERE element=TANAH AND isActive=true
+   Kemudian merge + shuffle seluruh 24 soal sebelum dikirim ke frontend.
+
+2. KEAMANAN LINK RAPOT:
+   - reportToken = UUID atau crypto random string (bukan ID langsung)
+   - Token disimpan di database dengan tanggal expiry
+   - Tidak perlu JWT untuk akses rapot via link (token sudah cukup)
+   - Setelah expired: tampilkan halaman "Link sudah kedaluarsa, silakan login"
+
+3. AUTENTIKASI GANDA:
+   - Jika user daftar via email+password LALU login via Google dengan email
+     yang sama → sistem merge akun (googleId ditambahkan ke User yang ada)
+   - Password disimpan dengan bcrypt hashing (tidak pernah plain text)
+
+4. STATISTIK HOMEPAGE (REAL-TIME vs CACHED):
+   - Total Pengunjung: bisa menggunakan server-side counter sederhana atau
+     integrasi analytics (Plausible/GA) — perlu keputusan teknis lebih lanjut
+   - Elemen Dominan: query agregasi bisa di-cache tiap 5-10 menit agar
+     tidak membebani database di setiap halaman dibuka
+
+5. SHARE SOCIAL MEDIA:
+   - Buat endpoint di NestJS yang men-generate gambar OG/kartu hasil
+     (menggunakan library seperti @napi-rs/canvas atau Puppeteer screenshot)
+   - Alternatif: generate gambar statis di frontend (html2canvas) lalu
+     download/share — lebih sederhana tanpa server load
+   - Keputusan final perlu didiskusikan saat implementasi fitur ini
+
+6. DEPLOYMENT STACK:
+   - Frontend (React): Vercel — CD otomatis dari GitHub branch main
+   - Backend (NestJS): Railway ATAU Render — set environment variables
+   - Database (PostgreSQL): Neon.tech ATAU Supabase (cloud, serverless)
+   - Storage (aset admin): Supabase Storage
+   - Email: Brevo (SMTP/API) — perlu setup akun & API key
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 10 — KONTEN YANG MASIH PERLU DIBUAT
+────────────────────────────────────────────────────────────────────────────────
+
+Seluruh konten berikut BELUM tersedia dan harus dibuat bersamaan dengan
+proses development (bisa diisi melalui Admin CMS setelah backend siap):
+
+  [ ] Bank soal (minimal 24+ soal, idealnya 40+ untuk variasi)
+      → Masing-masing 10+ soal per elemen (API/AIR/ANGIN/TANAH)
+      → Setiap soal memiliki 4 opsi jawaban dengan targetType berbeda
+
+  [ ] Deskripsi Persona Primer per elemen (kelebihan & kekurangan)
+      → Untuk: API (Choleric), AIR (Melancholic), ANGIN (Sanguine), TANAH (Phlegmatic)
+
+  [ ] Deskripsi Persona Sekunder (kombinasi Primer + Sekunder = 12 kombinasi)
+      → Atau: sistem cukup tampilkan 2 blok terpisah (Primer dan Sekunder masing-masing)
+
+  [ ] Link toko per parfum:
+      → TikTok Shop: link per produk Choleric/Melancholic/Sanguine/Phlegmatic
+      → Instagram Shopping: link per produk
+      → Shopee: link per produk di toko Vundiego
+
+  [ ] Aset visual:
+      → Gambar latar rapot per elemen (4 background berbeda)
+      → Aset animasi/icon 4 elemen untuk homepage
+      → Template kartu share social media (4 varian per elemen)
+
+  [ ] Konten email (template Brevo):
+      → Subject line, body email, desain HTML email
+
+  [ ] Pertanyaan soal ke-25 (survei penutup) — teks final
+
+  [ ] Teks CTA dan copy di seluruh halaman
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 11 — HALAMAN & ROUTE WEBSITE
+────────────────────────────────────────────────────────────────────────────────
+
+  PUBLIC ROUTES (dapat diakses tanpa login):
+    /                    → Homepage (animasi 4 elemen + statistik + CTA)
+    /report/:token       → Halaman Rapot via link email (30 hari valid)
+
+  AUTH ROUTES:
+    /auth/register       → Halaman daftar (email+password)
+    /auth/login          → Halaman login (email+password ATAU Google)
+    /auth/google         → Redirect Google OAuth
+    /auth/google/callback → Callback Google OAuth
+
+  PROTECTED ROUTES (perlu login):
+    /test                → Antarmuka tes 25 soal
+    /test/result         → Teaser screen setelah submit
+    /profile             → Profil user + history semua hasil tes
+
+  ADMIN ROUTES (perlu login sebagai admin):
+    /admin               → Redirect ke dashboard
+    /admin/dashboard     → Dasbor analitik utama
+    /admin/questions     → Manajemen bank soal (CRUD)
+    /admin/questions/new → Form tambah soal baru
+    /admin/questions/:id → Form edit soal
+    /admin/reports       → Manajemen rapot per elemen
+    /admin/metrics       → Update angka penjualan manual
+
+
+────────────────────────────────────────────────────────────────────────────────
+BAGIAN 12 — RINGKASAN KEPUTUSAN DISKUSI
+────────────────────────────────────────────────────────────────────────────────
+
+  TOPIK                         KEPUTUSAN FINAL
+  ──────────────────────────────────────────────────────────────────────────────
+  Konten/Aset                   Semua belum ada, dibuat bersamaan development
+  Desain Visual                 Mengikuti brand vundiego.com (Quiet Luxury)
+  Metode Auth                   Email+Password DAN Google OAuth (keduanya ada)
+  Akses Rapot via Link          Link berlaku 30 hari, public (tanpa login)
+  Akses Rapot setelah 30 hari   Harus login → lihat di history profil
+  Riwayat Tes                   Boleh tes ulang, semua hasil tersimpan
+  Level Admin                   1 admin saja (owner Vundiego)
+  Hosting Frontend               Vercel
+  Hosting Backend                Railway atau Render
+  Bahasa Antarmuka              Bahasa Indonesia (istilah teknis boleh Inggris)
+  Fitur Tambahan                Form Feedback + Share ke Social Media
+  Target Launch                 Belum ditentukan
+  Parfum yang digunakan         Sanguine, Melancholic, Phlegmatic, Choleric
+  Mapping elemen ke parfum:
+    API   → Choleric   (Bold, Intense, Passionate)
+    AIR   → Melancholic (Deep, Poetic, Introspective)
+    ANGIN → Sanguine   (Bright, Zesty, Uplifting)
+    TANAH → Phlegmatic (Calm, Soothing, Balanced)
+  ──────────────────────────────────────────────────────────────────────────────
+
+
+────────────────────────────────────────────────────────────────────────────────
+CATATAN AKHIR
+────────────────────────────────────────────────────────────────────────────────
+
+Dokumen ini merangkum SELURUH informasi dari:
+  1. Dokumen Plan/overview.pdf      (Spesifikasi teknis & UX dari brainstorming tim)
+  2. Dokumen Plan/TechStack.pdf     (Blueprint sistem V2 dengan NestJS)
+  3. Sesi diskusi langsung          (Keputusan-keputusan detail tambahan)
+  4. Analisis website vundiego.com  (Brand guidelines & estetika visual)
+
+Dokumen ini menjadi dasar untuk pembuatan IMPLEMENTATION PLAN.
+Semua keputusan di sini bersifat final kecuali ada revisi eksplisit dari tim.
+
+================================================================================
+  END OF DOCUMENT — PROJECT_BRIEF_COMPLETE.txt
+  Website Tes 4 Persona Vundiego
+================================================================================
