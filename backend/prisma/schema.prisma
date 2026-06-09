@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum ElementType {
+  API
+  AIR
+  ANGIN
+  TANAH
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  name        String
+  googleId    String?      @unique
+  password    String?      // null jika login via Google
+  isAdmin     Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  testResults TestResult[]
+
+  @@map("users")
+}
+
+model Question {
+  id        String         @id @default(uuid())
+  text      String         @db.Text
+  element   ElementType    // Label elemen untuk pengacakan 6-6-6-6
+  isActive  Boolean        @default(true)
+  options   AnswerOption[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([element, isActive]) // Untuk query SELECT 6 soal per elemen
+  @@map("questions")
+}
+
+model AnswerOption {
+  id         String      @id @default(uuid())
+  questionId String
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  targetType ElementType // Elemen yang mendapat +1 jika opsi ini dipilih
+  order      Int         @default(0) // Urutan tampil di frontend
+
+  @@index([questionId])   // Foreign key index
+  @@map("answer_options")
+}
+
+model TestResult {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Skor per elemen (dari 24 soal kepribadian)
+  scoreApi        Int         @default(0)
+  scoreAir        Int         @default(0)
+  scoreAngin      Int         @default(0)
+  scoreTanah      Int         @default(0)
+
+  // Hasil persona
+  personaPrimer   ElementType
+  personaSekunder ElementType
+
+  // Jawaban soal ke-25 (survei)
+  surveySource    String      // "Dari mana tahu Vundiego?"
+  surveyRelate    String?     // "Apakah hasilnya relate?"
+
+  // Feedback opsional dari user
+  feedbackRating  Int?        // 1-5
+  feedbackText    String?     @db.Text
+
+  // Token untuk akses rapot via link email (berlaku 30 hari)
+  reportToken     String      @unique
+  reportTokenExp  DateTime
+
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])            // Foreign key index
+  @@index([personaPrimer])     // Untuk query elemen dominan di homepage
+  @@map("test_results")
+}
+
+model SystemMetric {
+  id               Int @id @default(1) // Selalu hanya 1 baris
+  manualSalesCount Int @default(0)     // Diupdate manual oleh admin
+  totalVisitors    Int @default(0)     // Diincrement setiap kunjungan
+
+  @@map("system_metrics")
+}
+
+model ReportTemplate {
+  id               ElementType @id // API / AIR / ANGIN / TANAH
+
+  // Info parfum
+  parfumName       String      // Choleric / Melancholic / Sanguine / Phlegmatic
+
+  // Deskripsi persona (editable oleh admin)
+  descriptionPlus  String      @db.Text
+  descriptionMinus String      @db.Text
+
+  // Aset visual (URL dari Supabase Storage)
+  backgroundImage  String      @default("")
+
+  // Link toko e-commerce
+  shopeeLink       String?
+  tiktokLink       String?
+  instagramLink    String?
+
+  updatedAt        DateTime    @updatedAt
+
+  @@map("report_templates")
+}

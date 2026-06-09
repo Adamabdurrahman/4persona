@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment variables — JANGAN pernah commit!
+.env
+frontend/.env
+backend/.env
+
+# Build outputs
+frontend/dist/
+backend/dist/
+
+# Prisma generated
+backend/node_modules/.prisma/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Scratch files
+Plan/*.pdf
+
+# File credentials lokal — RAHASIA, jangan commit!
+backend/importantfile
+importantfile
