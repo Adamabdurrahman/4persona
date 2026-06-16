@@ -3,10 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 
-// Soal penutup (ke-25) — hardcoded, bisa dipindah ke DB nanti
+// Soal penutup (ke-21) — hardcoded, bisa dipindah ke DB nanti
 const CLOSING_QUESTION = {
-  id: 'closing-q25',
-  text: 'Dari mana kamu mengenal Vundiego?',
+  id: 'closing-q21',
+  text: 'Dari mana kamu mengenal Vun Diego?',
   element: null,
   isClosingQuestion: true,
   options: [
@@ -33,11 +33,11 @@ export class QuestionsService {
     return a;
   }
 
-  // ─── GET Session Questions (6-6-6-6 + 1 penutup) ────────
+  // ─── GET Session Questions (5-5-5-5 + 1 penutup) ────────
   async getSessionQuestions() {
     const elements = ['API', 'AIR', 'ANGIN', 'TANAH'] as const;
 
-    // Tarik 6 soal random per elemen secara paralel
+    // Tarik 5 soal random per elemen secara paralel
     const questionsByElement = await Promise.all(
       elements.map(async (el) => {
         const all = await this.prisma.question.findMany({
@@ -45,26 +45,26 @@ export class QuestionsService {
           include: { options: { orderBy: { order: 'asc' } } },
         });
 
-        if (all.length < 6) {
+        if (all.length < 5) {
           throw new BadRequestException(
-            `Soal untuk elemen ${el} kurang dari 6. Harap tambah soal terlebih dahulu.`,
+            `Soal untuk elemen ${el} kurang dari 5. Harap tambah soal terlebih dahulu.`,
           );
         }
 
-        // Ambil 6 soal secara acak
-        return this.shuffle(all).slice(0, 6);
+        // Ambil 5 soal secara acak
+        return this.shuffle(all).slice(0, 5);
       }),
     );
 
-    // Gabungkan semua 24 soal kepribadian lalu shuffle
+    // Gabungkan semua 20 soal kepribadian lalu shuffle
     const personalityQuestions = this.shuffle(questionsByElement.flat()).map(
       (q, index) => ({ ...q, questionNumber: index + 1, isClosingQuestion: false }),
     );
 
-    // Tambahkan soal penutup di posisi terakhir (ke-25)
+    // Tambahkan soal penutup di posisi terakhir (ke-21)
     return [
       ...personalityQuestions,
-      { ...CLOSING_QUESTION, questionNumber: 25 },
+      { ...CLOSING_QUESTION, questionNumber: 21 },
     ];
   }
 

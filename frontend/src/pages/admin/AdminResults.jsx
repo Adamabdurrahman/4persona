@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAdminResults } from '../../services/adminService';
-
-const ELEMENT_DATA = {
-  API:   { emoji: '🔥', name: 'Api',   color: 'var(--color-api)'   },
-  AIR:   { emoji: '💧', name: 'Air',   color: 'var(--color-air)'   },
-  ANGIN: { emoji: '🌬', name: 'Angin', color: 'var(--color-angin)' },
-  TANAH: { emoji: '🌿', name: 'Tanah', color: 'var(--color-tanah)' },
-};
+import { ELEMENT_DATA, PixelIcon } from '../../data/elementData';
 
 export default function AdminResults() {
   const [data, setData] = useState(null);
@@ -62,11 +56,18 @@ export default function AdminResults() {
                           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{t.user?.email}</p>
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
-                          <span style={{ color: el?.color, fontWeight: 500 }}>{el?.emoji} {el?.name}</span>
+                          <span style={{ color: el?.color, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                            {el && <PixelIcon src={el.pixelSrc} alt={el.name} size={24} />} {el?.name}
+                          </span>
                           {elSek && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', display: 'block' }}>+ {elSek.name}</span>}
                         </td>
                         <td style={{ padding: '0.75rem 1rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                          🔥{t.scoreApi} 💧{t.scoreAir} 🌬{t.scoreAngin} 🌿{t.scoreTanah}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                            <PixelIcon src={ELEMENT_DATA.API.pixelSrc} alt="Api" size={18} />{t.scoreApi}{' '}
+                            <PixelIcon src={ELEMENT_DATA.AIR.pixelSrc} alt="Air" size={18} />{t.scoreAir}{' '}
+                            <PixelIcon src={ELEMENT_DATA.ANGIN.pixelSrc} alt="Angin" size={18} />{t.scoreAngin}{' '}
+                            <PixelIcon src={ELEMENT_DATA.TANAH.pixelSrc} alt="Tanah" size={18} />{t.scoreTanah}
+                          </span>
                         </td>
                         <td style={{ padding: '0.75rem 1rem' }}>
                           {t.feedbackRating ? (

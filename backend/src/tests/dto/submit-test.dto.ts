@@ -29,7 +29,7 @@ export class AnswerItemDto {
 export class SubmitTestDto {
   @IsArray()
   @ValidateNested({ each: true })
-  @ArrayMinSize(24, { message: 'Harus ada 24 jawaban kepribadian' })
+  @ArrayMinSize(20, { message: 'Harus ada 20 jawaban kepribadian' })
   @Type(() => AnswerItemDto)
   answers: AnswerItemDto[];
 

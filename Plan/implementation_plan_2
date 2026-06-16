@@ -1,0 +1,357 @@
+# Sistem Voucher Shopee — 4Persona Vundiego
+
+Setelah user menyelesaikan tes kepribadian, mereka mendapatkan **1 voucher diskon Shopee** yang bisa digunakan saat membeli parfum Vundiego. Voucher bersifat **sekali seumur akun** — tes ulang tidak menghasilkan voucher baru. Admin dapat mengontrol seluruh sistem voucher dari panel admin.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Kode Voucher — Format & Sumber**
+> Apakah kode voucher Shopee sudah kamu miliki (misal kode dari kampanye Shopee tertentu)? Atau kamu ingin generate kode otomatis dengan prefix `VUNPERSONA`? Plan ini mengasumsikan admin memasukkan **satu kode voucher universal** yang diberikan ke semua user (misal: `VUNPERSONA20`), lalu admin bisa mengganti kode kapan saja.
+
+> [!IMPORTANT]
+> **Jumlah Stok Voucher**
+> Apakah stok voucher berarti "jumlah maksimal user yang bisa claim"? Misalnya stok 100 berarti hanya 100 user pertama yang dapat voucher. Jika stok habis, user baru tes tidak dapat voucher. Plan ini mengasumsikan mekanisme tersebut.
+
+> [!WARNING]
+> **Keamanan Kode Voucher**
+> Kode voucher Shopee pada dasarnya adalah teks yang bisa dicopy-paste. Untuk mencegah user lain melihat kode (misal inspect element), kode **tidak dikirim ke frontend secara langsung di response publik** — melainkan di-fetch melalui API terproteksi (`/api/vouchers/my`) yang hanya bisa diakses pemilik voucher yang sudah login. Selain itu, kode ditampilkan dalam keadaan **sebagian tersembunyi** (`VUN•••••20`) sampai user klik "Tampilkan Kode".
+
+---
+
+## Open Questions
+
+> [!NOTE]
+> 1. **Link Shopee**: Apakah link Shopee untuk redirect user sudah ada? Atau mau pakai link dari `ReportTemplate.shopeeLink` yang sudah ada di database? Plan ini mengasumsikan admin bisa set URL Shopee di konfigurasi voucher.
+>
+> 2. **Diskon Persentase/Nominal**: Apakah perlu ditampilkan besaran diskon (misal "Diskon 20%") di kartu voucher dan promo homepage? Plan ini mengasumsikan ada field `discountLabel` yang diisi admin (misal "Diskon 20%" atau "Potongan Rp25.000").
+
+---
+
+## Proposed Changes
+
+### Database — Prisma Schema
+
+#### [MODIFY] [schema.prisma](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/backend/prisma/schema.prisma)
+
+Tambahkan 2 model baru:
+
+```prisma
+// ─── Konfigurasi Voucher (1 baris, dikelola admin) ────────
+model VoucherConfig {
+  id              Int      @id @default(1)
+  isEnabled       Boolean  @default(false)  // Toggle ON/OFF global
+  voucherCode     String   @default("")     // Kode voucher Shopee (misal VUNPERSONA20)
+  discountLabel   String   @default("")     // Label diskon (misal "Diskon 20%")
+  totalStock      Int      @default(0)      // Stok total voucher
+  claimedCount    Int      @default(0)      // Jumlah yang sudah di-claim
+  expiryHours     Int      @default(72)     // Masa berlaku voucher per user (default 3 hari = 72 jam)
+  shopeeUrl       String   @default("")     // URL redirect ke Shopee
+  updatedAt       DateTime @updatedAt
+
+  @@map("voucher_config")
+}
+
+// ─── Catatan Klaim Voucher per User ───────────────────────
+model VoucherClaim {
+  id          String   @id @default(uuid())
+  userId      String   @unique  // 1 user = 1 claim seumur hidup
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voucherCode String              // Snapshot kode saat di-claim
+  claimedAt   DateTime @default(now())
+  expiresAt   DateTime            // claimedAt + expiryHours
+
+  @@map("voucher_claims")
+}
+```
+
+Tambahkan relasi di model `User`:
+```prisma
+model User {
+  // ... existing fields ...
+  voucherClaim VoucherClaim?  // 1-to-1 optional
+}
+```
+
+Setelah update schema, jalankan:
+```bash
+npx prisma migrate dev --name add-voucher-system
+```
+
+---
+
+### Backend — NestJS Vouchers Module
+
+#### [NEW] `backend/src/vouchers/vouchers.module.ts`
+Module NestJS yang mengekspos `VouchersService` dan `VouchersController`.
+
+#### [NEW] `backend/src/vouchers/vouchers.service.ts`
+Service dengan method berikut:
+
+| Method | Deskripsi |
+|--------|-----------|
+| `getConfig()` | Return konfigurasi voucher (admin) |
+| `getPublicConfig()` | Return info publik: `isEnabled`, `remainingStock`, `discountLabel` (TANPA kode voucher) |
+| `updateConfig(dto)` | Update konfigurasi: kode, stok, label, URL, toggle on/off (admin) |
+| `claimVoucher(userId)` | Claim voucher untuk user — cek: (1) sistem enabled, (2) stok tersedia, (3) user belum pernah claim. Return `VoucherClaim` |
+| `getMyVoucher(userId)` | Get voucher milik user yang login. Return claim + kode + expired status |
+
+#### [NEW] `backend/src/vouchers/vouchers.controller.ts`
+REST endpoints:
+
+| Route | Guard | Method |
+|-------|-------|--------|
+| `GET /api/vouchers/public` | — (public) | `getPublicConfig()` — untuk homepage promo banner |
+| `GET /api/vouchers/my` | `JwtAuthGuard` | `getMyVoucher()` — untuk profile page |
+| `GET /api/admin/vouchers/config` | `JwtAuthGuard + AdminGuard` | `getConfig()` — admin panel |
+| `PUT /api/admin/vouchers/config` | `JwtAuthGuard + AdminGuard` | `updateConfig()` — admin panel |
+| `GET /api/admin/vouchers/claims` | `JwtAuthGuard + AdminGuard` | `getClaims()` — daftar user yang sudah claim |
+
+#### [NEW] `backend/src/vouchers/dto/update-config.dto.ts`
+DTO untuk validasi payload update config.
+
+---
+
+### Backend — Integrasi dengan Submit Tes
+
+#### [MODIFY] [tests.service.ts](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/backend/src/tests/tests.service.ts)
+
+Di method `submitTest()`, setelah menyimpan `TestResult`, tambahkan logika **auto-claim voucher**:
+
+```typescript
+// 6b. Auto-claim voucher (jika eligible)
+let voucherClaim = null;
+try {
+  voucherClaim = await this.vouchersService.claimVoucher(userId);
+} catch {
+  // Silently ignore — user sudah pernah claim, stok habis, atau fitur dinonaktifkan
+}
+
+return {
+  personaPrimer,
+  personaSekunder,
+  reportToken,
+  scores: { ... },
+  hasVoucher: !!voucherClaim,  // flag agar frontend tahu ada voucher baru
+};
+```
+
+#### [MODIFY] [tests.module.ts](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/backend/src/tests/tests.module.ts)
+Import `VouchersModule` agar `VouchersService` tersedia di `TestsService`.
+
+#### [MODIFY] [app.module.ts](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/backend/src/app.module.ts)
+Import `VouchersModule` ke module utama.
+
+---
+
+### Frontend — Profile Page (Kartu Voucher)
+
+#### [NEW] `frontend/src/components/VoucherCard.jsx`
+
+Komponen kartu voucher premium yang ditampilkan di ProfilePage:
+
+**State Visual:**
+- **Aktif** — Kartu voucher dengan kode (tersembunyi default, bisa di-reveal), countdown expiry, tombol "Salin Kode", dan tombol "Pakai di Shopee"
+- **Expired** — Kartu sama tapi greyscale/muted, dengan badge **EXPIRED** berwarna merah, kode dan tombol dinonaktifkan
+
+**Detail UI:**
+- Background gradient emas subtle — konsisten dengan tema Quiet Luxury
+- Kode voucher ditampilkan dalam format masked: `VUN•••••20` → klik "Tampilkan" → `VUNPERSONA20`
+- Countdown: "Berlaku 2 hari 14 jam lagi" atau "Expired 3 jam yang lalu"
+- Tombol **"📋 Salin Kode"** — copy ke clipboard + toast notification "Berhasil disalin!"
+- Tombol **"🛒 Pakai di Shopee"** — pada mobile: coba buka deep link Shopee app (`shopeeid://...`), fallback ke URL browser. Pada desktop: buka URL Shopee di tab baru.
+- Badge merah overlay **EXPIRED** — rotate -12deg, semi-transparent stamp style
+
+#### [MODIFY] [ProfilePage.jsx](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/frontend/src/pages/ProfilePage.jsx)
+
+Sisipkan `<VoucherCard />` di antara CTA Tes (line ~338) dan Riwayat Tes (line ~340):
+
+```
+Profile Header
+CTA Tes (Mulai/Ulangi)
+─── VOUCHER CARD ─── ← NEW (jika user punya voucher)
+Riwayat Tes
+```
+
+Fetch data voucher user via API `/api/vouchers/my` saat halaman dimuat.
+
+---
+
+### Frontend — Admin Panel (Manage Voucher)
+
+#### [NEW] `frontend/src/pages/admin/AdminVouchers.jsx`
+
+Halaman admin baru dengan layout:
+
+**Section 1: Konfigurasi Voucher**
+- Toggle ON/OFF (switch pill) — dengan badge status hijau/merah
+- Input: Kode Voucher (misal `VUNPERSONA20`)
+- Input: Label Diskon (misal `Diskon 20%`)
+- Input: Total Stok (angka)
+- Input: Masa Berlaku per User (jam, default 72)
+- Input: URL Shopee
+- Tombol "Simpan Konfigurasi"
+
+**Section 2: Statistik Stok**
+- Progress bar visual: `claimedCount / totalStock` (misal "47/100 sudah di-claim")
+- Sisa stok tersedia
+
+**Section 3: Daftar Klaim**
+- Tabel: Nama User, Email, Kode, Waktu Claim, Status (aktif/expired)
+- Pagination jika banyak data
+
+#### [MODIFY] [AdminLayout.jsx](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/frontend/src/pages/admin/AdminLayout.jsx)
+
+Tambahkan item navigasi baru di `NAV_ITEMS`:
+```javascript
+import { Ticket } from 'lucide-react';
+
+// di array NAV_ITEMS:
+{ to: '/admin/vouchers', label: 'Kelola Voucher', icon: Ticket },
+```
+
+#### [MODIFY] [App.jsx](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/frontend/src/App.jsx)
+
+Tambahkan route baru di dalam `<Route path="/admin">`:
+```jsx
+import AdminVouchers from './pages/admin/AdminVouchers';
+
+<Route path="vouchers" element={<AdminVouchers />} />
+```
+
+#### [MODIFY] [adminService.js](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/frontend/src/services/adminService.js)
+
+Tambahkan fungsi API baru:
+```javascript
+export const getVoucherConfig = async () => { ... };
+export const updateVoucherConfig = async (payload) => { ... };
+export const getVoucherClaims = async (page = 1) => { ... };
+```
+
+---
+
+### Frontend — Homepage (Section Promo Voucher)
+
+#### [MODIFY] [HomePage.jsx](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/frontend/src/pages/HomePage.jsx)
+
+Tambahkan **section promo voucher baru** yang **hanya muncul jika voucher system enabled** dan **stok masih tersedia**. Disisipkan antara STATS SECTION dan CTA SECTION (setelah line ~527):
+
+```
+Hero
+Stats (Komunitas)
+─── VOUCHER PROMO ─── ← NEW (conditional)
+CTA (Siap Mengenal Dirimu?)
+Elements Teaser
+Vundiego Button
+```
+
+**Konten section:**
+1. **Badge**: 🎁 "Promo Spesial"
+2. **Headline**: "Dapatkan Voucher Diskon Shopee"
+3. **Sub-headline**: "{discountLabel} untuk pembelian parfum Vundiego"
+4. **Info stok**: "🔥 Tersisa {remaining} dari {total} voucher" — dengan progress bar visual
+5. **3 langkah cara mendapatkan & memakai:**
+   - ① Ikuti Tes Kepribadian — gratis, 5 menit
+   - ② Dapatkan Voucher — otomatis muncul di profil setelah tes selesai
+   - ③ Pakai di Shopee — salin kode, tempel saat checkout
+6. **Tombol CTA**: "Mulai Tes & Dapatkan Voucher →"
+
+Data diambil dari endpoint publik `/api/vouchers/public` (tanpa login) yang sudah ada di `getPublicMetrics` flow.
+
+#### [NEW] `frontend/src/services/voucherService.js`
+
+Service baru khusus voucher:
+```javascript
+export const getPublicVoucherInfo = async () => { ... };  // public
+export const getMyVoucher = async () => { ... };          // protected
+```
+
+---
+
+### Frontend — Flow Setelah Submit Tes
+
+#### [MODIFY] [TestPage.jsx](file:///c:/Users/isyaa/OneDrive/Documents/Web%20and%20Code/4Persona/frontend/src/pages/TestPage.jsx)
+
+Setelah submit tes berhasil, cek `response.hasVoucher`. Jika `true`, tampilkan notifikasi singkat atau badge di teaser/loading screen: *"🎁 Voucher diskon sudah menunggumu di profil!"*
+
+---
+
+## Diagram Arsitektur
+
+```mermaid
+graph TD
+    A["User menyelesaikan tes"] --> B{"submitTest()"}
+    B --> C["Simpan TestResult"]
+    C --> D{"claimVoucher(userId)"}
+    D -->|Eligible| E["Buat VoucherClaim"]
+    D -->|Sudah pernah claim| F["Skip (silent)"]
+    D -->|Stok habis| F
+    D -->|Fitur OFF| F
+    E --> G["Return hasVoucher: true"]
+    F --> H["Return hasVoucher: false"]
+
+    I["ProfilePage"] --> J["GET /api/vouchers/my"]
+    J --> K{"User punya claim?"}
+    K -->|Ya| L["Tampilkan VoucherCard"]
+    K -->|Tidak| M["Tidak tampilkan apa-apa"]
+
+    N["HomePage"] --> O["GET /api/vouchers/public"]
+    O --> P{"isEnabled && stock > 0?"}
+    P -->|Ya| Q["Tampilkan Section Promo"]
+    P -->|Tidak| R["Sembunyikan Section"]
+
+    S["Admin Panel"] --> T["GET/PUT /api/admin/vouchers/config"]
+    S --> U["GET /api/admin/vouchers/claims"]
+```
+
+---
+
+## Daftar File yang Dimodifikasi/Dibuat
+
+| Tipe | File | Perubahan |
+|------|------|-----------|
+| MODIFY | `schema.prisma` | +2 model baru (`VoucherConfig`, `VoucherClaim`) + relasi di `User` |
+| NEW | `vouchers/vouchers.module.ts` | Module NestJS baru |
+| NEW | `vouchers/vouchers.service.ts` | Service: claim, get config, update |
+| NEW | `vouchers/vouchers.controller.ts` | REST endpoints (public + admin) |
+| NEW | `vouchers/dto/update-config.dto.ts` | DTO validasi |
+| MODIFY | `tests.service.ts` | Integrasi auto-claim setelah submit |
+| MODIFY | `tests.module.ts` | Import VouchersModule |
+| MODIFY | `app.module.ts` | Import VouchersModule |
+| NEW | `VoucherCard.jsx` | Komponen kartu voucher di profil |
+| MODIFY | `ProfilePage.jsx` | Sisipkan VoucherCard |
+| NEW | `AdminVouchers.jsx` | Halaman admin kelola voucher |
+| MODIFY | `AdminLayout.jsx` | Tambah nav item "Kelola Voucher" |
+| MODIFY | `App.jsx` | Tambah route `/admin/vouchers` |
+| MODIFY | `adminService.js` | Tambah 3 fungsi API voucher admin |
+| NEW | `voucherService.js` | Service frontend: publik + user |
+| MODIFY | `HomePage.jsx` | Section promo voucher conditional |
+| MODIFY | `TestPage.jsx` | Notifikasi voucher setelah submit |
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+# 1. Prisma migration
+cd backend && npx prisma migrate dev --name add-voucher-system
+
+# 2. Backend build
+npm run build
+
+# 3. Frontend build
+cd ../frontend && npm run build
+```
+
+### Manual Verification
+1. **Admin**: Login → Admin Panel → "Kelola Voucher" → Set kode, stok, enable toggle → Simpan
+2. **Homepage**: Buka `/` → Lihat section promo voucher muncul dengan stok yang benar
+3. **User baru**: Register → Tes → Submit → Cek flag `hasVoucher` → Buka `/profile` → Kartu voucher muncul
+4. **Copy & Redirect**: Klik "Salin Kode" → cek clipboard. Klik "Pakai di Shopee" → redirect
+5. **Expired**: Tunggu (atau manipulasi waktu) sampai voucher expired → Cek badge EXPIRED muncul
+6. **Tes ulang**: User tes lagi → Tidak ada voucher baru → Kartu voucher lama tetap ada (atau expired)
+7. **Stok habis**: Habiskan stok → User baru tes → Tidak dapat voucher → Homepage promo hilang
+8. **Toggle OFF**: Admin matikan voucher → Homepage promo hilang → User baru tes tidak dapat voucher
+9. **Mobile**: Tes di HP → Tombol "Pakai di Shopee" → Buka aplikasi Shopee (atau fallback browser)

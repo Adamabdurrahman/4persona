@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAdminTemplates, updateAdminTemplate } from '../../services/adminService';
-
-const ELEMENT_DATA = {
-  API:   { emoji: '🔥', name: 'Api',   color: 'var(--color-api)'   },
-  AIR:   { emoji: '💧', name: 'Air',   color: 'var(--color-air)'   },
-  ANGIN: { emoji: '🌬', name: 'Angin', color: 'var(--color-angin)' },
-  TANAH: { emoji: '🌿', name: 'Tanah', color: 'var(--color-tanah)' },
-};
+import { ELEMENT_DATA, PixelIcon } from '../../data/elementData';
 
 function TextArea({ label, value, onChange, rows = 4, placeholder }) {
   return (
@@ -104,16 +98,9 @@ export default function AdminTemplates() {
             <button
               key={id}
               onClick={() => handleSelect(id)}
-              style={{
-                padding: '0.5rem 1.25rem', borderRadius: 'var(--radius-md)',
-                border: `1.5px solid ${isActive ? e.color : 'var(--color-border)'}`,
-                background: isActive ? e.color + '12' : 'transparent',
-                color: isActive ? e.color : 'var(--color-text-muted)',
-                fontSize: 'var(--text-sm)', fontWeight: isActive ? 600 : 400,
-                cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all 0.15s',
-              }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
-              {e.emoji} {e.name}
+              <PixelIcon src={e.pixelSrc} alt={e.name} size={28} /> {e.name}
             </button>
           );
         })}
@@ -126,7 +113,7 @@ export default function AdminTemplates() {
       ) : (
         <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-2xl)', padding: '2rem', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.75rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--color-surface)' }}>
-            <span style={{ fontSize: '1.5rem' }}>{el?.emoji}</span>
+            <PixelIcon src={el?.pixelSrc} alt={el?.name} size={64} />
             <div>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)', fontWeight: 500, color: el?.color }}>{el?.name}</p>
               <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Edit konten laporan untuk persona ini</p>

@@ -24,7 +24,7 @@ export default function PersonaRadarChart({ scores }) {
   const data = [
     { element: 'Api 🔥',   score: scores.API || 0,   pct: Math.round(((scores.API || 0) / total) * 100) },
     { element: 'Air 💧',   score: scores.AIR || 0,   pct: Math.round(((scores.AIR || 0) / total) * 100) },
-    { element: 'Angin 🌬', score: scores.ANGIN || 0, pct: Math.round(((scores.ANGIN || 0) / total) * 100) },
+    { element: 'Angin 🍃', score: scores.ANGIN || 0, pct: Math.round(((scores.ANGIN || 0) / total) * 100) },
     { element: 'Tanah 🌿', score: scores.TANAH || 0, pct: Math.round(((scores.TANAH || 0) / total) * 100) },
   ];
 
@@ -51,7 +51,7 @@ export default function PersonaRadarChart({ scores }) {
 
   return (
     <div style={{ width: '100%', height: 300 }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
         <RechartsRadar data={data} cx="50%" cy="50%" outerRadius="75%">
           <PolarGrid
             gridType="polygon"

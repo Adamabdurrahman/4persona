@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import CardStack from '../components/CardStack';
@@ -105,6 +105,7 @@ export default function TestPage() {
           personaSekunder: data.personaSekunder,
           reportToken: data.reportToken,
           scores: data.scores,
+          hasVoucher: data.hasVoucher || false,
         },
       });
     } catch (err) {
@@ -174,6 +175,40 @@ export default function TestPage() {
         justifyContent: 'center',
         padding: '2rem',
       }}>
+        {/* Back to home button — top left */}
+        <Link
+          to="/"
+          id="btn-test-back-home"
+          style={{
+            position: 'fixed',
+            top: '1.25rem',
+            left: '1.5rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.5rem 1rem',
+            background: 'rgba(248,246,242,0.85)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-xs)',
+            fontWeight: 500,
+            color: 'var(--color-text-muted)',
+            letterSpacing: 'var(--tracking-wide)',
+            textDecoration: 'none',
+            textTransform: 'uppercase',
+            zIndex: 20,
+            transition: 'color 0.15s, border-color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-text)'; e.currentTarget.style.borderColor = 'var(--color-text)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Beranda
+        </Link>
+
         {/* Decorative top gradient */}
         <div style={{
           position: 'fixed',
@@ -301,14 +336,45 @@ export default function TestPage() {
         top: 0,
         zIndex: 10,
       }}>
-        <span style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 'var(--text-lg)',
-          fontWeight: 500,
-          color: 'var(--color-text)',
-        }}>
-          Vundiego
-        </span>
+        {/* Left side: back button (first question) or brand name */}
+        {currentIndex === 0 ? (
+          <Link
+            to="/"
+            id="btn-test-topbar-home"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.375rem 0.75rem',
+              fontSize: 'var(--text-xs)',
+              color: 'var(--color-text-muted)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              textDecoration: 'none',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 500,
+              letterSpacing: 'var(--tracking-wide)',
+              textTransform: 'uppercase',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-text)'; e.currentTarget.style.color = 'var(--color-text)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Beranda
+          </Link>
+        ) : (
+          <span style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'var(--text-lg)',
+            fontWeight: 500,
+            color: 'var(--color-text)',
+          }}>
+            Vun Diego
+          </span>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{

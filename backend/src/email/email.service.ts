@@ -11,7 +11,7 @@ export class EmailService {
   constructor(private configService: ConfigService) {
     this.apiKey = this.configService.get<string>('BREVO_API_KEY');
     this.fromEmail = this.configService.get<string>('BREVO_FROM_EMAIL');
-    this.fromName = this.configService.get<string>('BREVO_FROM_NAME') || '4Persona Vundiego';
+    this.fromName = this.configService.get<string>('BREVO_FROM_NAME') || '4Persona Vun Diego';
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
   }
 
@@ -44,7 +44,7 @@ export class EmailService {
 <body style="margin:0;padding:0;font-family:'Inter',Arial,sans-serif;background:#f8f6f2;color:#1c1b19;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <tr><td style="background:#1c1b19;padding:40px;text-align:center;">
-      <h1 style="color:#fff;font-size:28px;font-weight:400;letter-spacing:0.1em;margin:0;font-family:Georgia,serif;">Vundiego</h1>
+      <h1 style="color:#fff;font-size:28px;font-weight:400;letter-spacing:0.1em;margin:0;font-family:Georgia,serif;">Vun Diego</h1>
       <p style="color:rgba(255,255,255,0.5);font-size:12px;letter-spacing:0.15em;text-transform:uppercase;margin:8px 0 0;">4Persona Result</p>
     </td></tr>
     <tr><td style="padding:40px;">
@@ -53,7 +53,7 @@ export class EmailService {
         Persona utamamu adalah<br/><em style="color:#c9a96e;">${personaName}</em>
       </h2>
       <p style="color:#6b6560;font-size:15px;line-height:1.7;margin:0 0 32px;">
-        Laporan lengkap kepribadianmu sudah siap! Klik tombol di bawah untuk melihat analisis mendalam, radar chart, dan rekomendasi parfum Vundiego yang paling cocok untukmu.
+        Laporan lengkap kepribadianmu sudah siap! Klik tombol di bawah untuk melihat analisis mendalam, radar chart, dan rekomendasi parfum Vun Diego yang paling cocok untukmu.
       </p>
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr><td style="text-align:center;padding-bottom:32px;">
@@ -67,7 +67,7 @@ export class EmailService {
       </p>
     </td></tr>
     <tr><td style="background:#f8f6f2;padding:20px 40px;text-align:center;border-top:1px solid #efece6;">
-      <p style="color:#a09890;font-size:11px;margin:0;">© 2026 Vundiego · Temukan Parfum Sesuai Kepribadianmu</p>
+      <p style="color:#a09890;font-size:11px;margin:0;">© 2026 Vun Diego · Temukan Parfum Sesuai Kepribadianmu</p>
     </td></tr>
   </table>
 </body>

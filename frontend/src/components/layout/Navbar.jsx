@@ -68,7 +68,7 @@ export default function Navbar() {
               textDecoration: 'none',
             }}
           >
-            Vundiego
+            Vun Diego
           </Link>
 
           {/* Desktop Nav */}

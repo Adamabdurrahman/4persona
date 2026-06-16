@@ -8,7 +8,9 @@ import {
 } from '../../services/adminService';
 
 const ELEMENTS = ['API', 'AIR', 'ANGIN', 'TANAH'];
-const ELEMENT_LABELS = { API: '🔥 Api', AIR: '💧 Air', ANGIN: '🌬 Angin', TANAH: '🌿 Tanah' };
+
+const ELEMENT_LABELS = { API: '🔥 Api', AIR: '💧 Air', ANGIN: '🍃 Angin', TANAH: '🌿 Tanah' };
+
 const ELEMENT_COLORS = {
   API: 'var(--color-api)', AIR: 'var(--color-air)',
   ANGIN: 'var(--color-angin)', TANAH: 'var(--color-tanah)',

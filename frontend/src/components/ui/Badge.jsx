@@ -15,11 +15,11 @@ const ELEMENT_CONFIG = {
     label: '💧 Air',
     color: 'var(--color-air)',
     bg: 'var(--color-air-light)',
-    border: 'rgba(30, 58, 95, 0.2)',
+    border: 'rgba(59, 119, 188, 0.2)',
     parfum: 'Melancholic',
   },
   ANGIN: {
-    label: '🌬 Angin',
+    label: '🍃 Angin',
     color: 'var(--color-angin)',
     bg: 'var(--color-angin-light)',
     border: 'rgba(197, 150, 58, 0.2)',

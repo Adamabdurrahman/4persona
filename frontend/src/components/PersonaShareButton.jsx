@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
+import { ELEMENT_DATA } from '../data/elementData';
 
 const ELEMENT_CONFIG = {
   API: {
@@ -16,7 +17,7 @@ const ELEMENT_CONFIG = {
     accent: '#7dd3fc', bg: '#020f1c',
   },
   ANGIN: {
-    emoji: '🌬', name: 'Angin', parfum: 'Sanguine',
+    emoji: '🍃', name: 'Angin', parfum: 'Sanguine',
     tagline: 'Cerah, Segar & Menginspirasi',
     grad: ['#14532d', '#15803d', '#4ade80'],
     accent: '#86efac', bg: '#020f06',
@@ -35,22 +36,42 @@ function PersonaCardCanvas({ el, userName, scores, cardRef }) {
   const bars = [
     { key: 'API',   emoji: '🔥', label: 'Api',   pct: Math.round((scores.API   / total) * 100) },
     { key: 'AIR',   emoji: '💧', label: 'Air',   pct: Math.round((scores.AIR   / total) * 100) },
-    { key: 'ANGIN', emoji: '🌬', label: 'Angin', pct: Math.round((scores.ANGIN / total) * 100) },
+    { key: 'ANGIN', emoji: '🍃', label: 'Angin', pct: Math.round((scores.ANGIN / total) * 100) },
     { key: 'TANAH', emoji: '🌿', label: 'Tanah', pct: Math.round((scores.TANAH / total) * 100) },
   ].sort((a, b) => b.pct - a.pct);
 
   return (
     <div ref={cardRef} style={{ width: 480, height: 640, background: cfg.bg, borderRadius: 24, overflow: 'hidden', position: 'relative', fontFamily: 'Georgia, serif', display: 'flex', flexDirection: 'column' }}>
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 50% 0%, ${cfg.grad[1]}40 0%, transparent 70%)`, pointerEvents: 'none' }} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 40px 24px', position: 'relative', zIndex: 1 }}>
-        <p style={{ fontSize: 11, fontWeight: 400, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 32 }}>VUNDIEGO · 4PERSONA</p>
-        <p style={{ fontSize: 64, marginBottom: 8, lineHeight: 1 }}>{cfg.emoji}</p>
-        <h2 style={{ fontSize: 52, fontWeight: 400, color: cfg.accent, margin: '8px 0 4px', letterSpacing: '-0.02em', lineHeight: 1 }}>{cfg.name}</h2>
-        <p style={{ fontSize: 11, fontWeight: 400, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>{cfg.parfum}</p>
-        <p style={{ fontSize: 15, fontStyle: 'italic', color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}>"{cfg.tagline}"</p>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 40px 36px', position: 'relative', zIndex: 1 }}>
+        <p style={{ fontSize: 11, fontWeight: 400, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 16 }}>VUN DIEGO · 4PERSONA</p>
+        <img 
+          src={ELEMENT_DATA[el].pixelSrc} 
+          alt={cfg.name} 
+          style={{ 
+            width: 150, 
+            height: 150, 
+            marginBottom: 6, 
+            imageRendering: 'pixelated',
+            objectFit: 'contain'
+          }} 
+        />
+        <h2 style={{ fontSize: 52, fontWeight: 400, color: cfg.accent, margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>{cfg.name}</h2>
+        <p style={{ fontSize: 11, fontWeight: 400, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>{cfg.parfum}</p>
+        <p style={{ fontSize: 15, fontStyle: 'italic', color: 'rgba(255,255,255,0.7)', textAlign: 'center', lineHeight: 1.6, maxWidth: 320, marginBottom: 16 }}>"{cfg.tagline}"</p>
         {userName && (
-          <div style={{ padding: '6px 20px', border: `1px solid ${cfg.accent}40`, borderRadius: 100, background: `${cfg.accent}12` }}>
-            <p style={{ fontSize: 13, color: cfg.accent, letterSpacing: '0.08em' }}>{userName}</p>
+          <div style={{ 
+            display: 'inline-block',
+            height: 30,
+            lineHeight: '28px',
+            padding: '0 20px',
+            border: `1px solid ${cfg.accent}40`, 
+            borderRadius: 100, 
+            background: `${cfg.accent}12`,
+            textAlign: 'center',
+            boxSizing: 'border-box'
+          }}>
+            <span style={{ fontSize: 13, color: cfg.accent, letterSpacing: '0.08em' }}>{userName}</span>
           </div>
         )}
       </div>
@@ -58,8 +79,17 @@ function PersonaCardCanvas({ el, userName, scores, cardRef }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {bars.map(b => (
             <div key={b.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, width: 20 }}>{b.emoji}</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', width: 36 }}>{b.label}</span>
+              <img 
+                src={ELEMENT_DATA[b.key].pixelSrc} 
+                alt={b.label} 
+                style={{ 
+                  width: 26, 
+                  height: 26, 
+                  imageRendering: 'pixelated',
+                  objectFit: 'contain'
+                }} 
+              />
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', width: 36, marginLeft: 2 }}>{b.label}</span>
               <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
                 <div style={{ width: `${b.pct}%`, height: '100%', background: cfg.accent, borderRadius: 2, opacity: b.key === el ? 1 : 0.4 }} />
               </div>
@@ -114,7 +144,7 @@ export default function PersonaShareButton({ personaPrimer, userName, scores }) 
         const blob = await res.blob();
         const file = new File([blob], `persona-${personaPrimer}.png`, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Persona ${cfg?.name} — Vundiego`, text: `Aku adalah ${cfg?.name}! Cek hasil tesmu di Vundiego.` });
+          await navigator.share({ files: [file], title: `Persona ${cfg?.name} — Vun Diego`, text: `Aku adalah ${cfg?.name}! Cek hasil tesmu di Vun Diego.` });
           return;
         }
       } catch {}

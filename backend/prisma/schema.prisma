@@ -27,15 +27,16 @@ enum ElementType {
 // ============================================================
 
 model User {
-  id          String       @id @default(uuid())
-  email       String       @unique
-  name        String
-  googleId    String?      @unique
-  password    String?      // null jika login via Google
-  isAdmin     Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  testResults TestResult[]
+  id           String         @id @default(uuid())
+  email        String         @unique
+  name         String
+  googleId     String?        @unique
+  password     String?        // null jika login via Google
+  isAdmin      Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  testResults  TestResult[]
+  voucherClaim VoucherClaim?  // 1 user = 1 voucher seumur hidup
 
   @@map("users")
 }
@@ -43,13 +44,13 @@ model User {
 model Question {
   id        String         @id @default(uuid())
   text      String         @db.Text
-  element   ElementType    // Label elemen untuk pengacakan 6-6-6-6
+  element   ElementType    // Label elemen untuk pengacakan 5-5-5-5
   isActive  Boolean        @default(true)
   options   AnswerOption[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  @@index([element, isActive]) // Untuk query SELECT 6 soal per elemen
+  @@index([element, isActive]) // Untuk query SELECT 5 soal per elemen
   @@map("questions")
 }
 
@@ -70,7 +71,7 @@ model TestResult {
   userId          String
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Skor per elemen (dari 24 soal kepribadian)
+  // Skor per elemen (dari 20 soal kepribadian)
   scoreApi        Int         @default(0)
   scoreAir        Int         @default(0)
   scoreAngin      Int         @default(0)
@@ -80,7 +81,7 @@ model TestResult {
   personaPrimer   ElementType
   personaSekunder ElementType
 
-  // Jawaban soal ke-25 (survei)
+  // Jawaban soal penutup (survei)
   surveySource    String      // "Dari mana tahu Vundiego?"
   surveyRelate    String?     // "Apakah hasilnya relate?"
 
@@ -114,8 +115,13 @@ model ReportTemplate {
   parfumName       String      // Choleric / Melancholic / Sanguine / Phlegmatic
 
   // Deskripsi persona (editable oleh admin)
+  description      String      @default("") @db.Text  // Deskripsi singkat persona
   descriptionPlus  String      @db.Text
   descriptionMinus String      @db.Text
+
+  // Rekomendasi & tagline parfum
+  parfumRecommendation String  @default("")  // Nama parfum yang direkomendasikan
+  parfumTagline        String  @default("")  // Tagline/deskripsi singkat parfum
 
   // Aset visual (URL dari Supabase Storage)
   backgroundImage  String      @default("")
@@ -129,3 +135,31 @@ model ReportTemplate {
 
   @@map("report_templates")
 }
+
+// ─── Voucher System ─────────────────────────────────────────
+
+model VoucherConfig {
+  id              Int      @id @default(1)     // Selalu 1 baris
+  isEnabled       Boolean  @default(false)     // Toggle ON/OFF global
+  voucherCode     String   @default("")        // Kode voucher Shopee
+  discountLabel   String   @default("Potongan Rp4.000")
+  totalStock      Int      @default(0)         // Stok total voucher
+  claimedCount    Int      @default(0)         // Jumlah sudah di-claim
+  expiryHours     Int      @default(72)        // Masa berlaku per user (3 hari)
+  shopeeUrl       String   @default("https://shopee.co.id/vundiego?categoryId=100630&entryPoint=ShopByPDP&itemId=51311595656&upstream=search")
+  updatedAt       DateTime @updatedAt
+
+  @@map("voucher_config")
+}
+
+model VoucherClaim {
+  id          String   @id @default(uuid())
+  userId      String   @unique               // 1 user = 1 claim seumur hidup
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  voucherCode String                          // Snapshot kode saat di-claim
+  claimedAt   DateTime @default(now())
+  expiresAt   DateTime                        // claimedAt + expiryHours
+
+  @@map("voucher_claims")
+}
+

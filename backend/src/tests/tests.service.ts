@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { VouchersService } from '../vouchers/vouchers.service';
 import { SubmitTestDto } from './dto/submit-test.dto';
 import { randomUUID } from 'crypto';
 
@@ -19,6 +20,7 @@ export class TestsService {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private vouchersService: VouchersService,
   ) {}
 
   // ─── Submit Test ─────────────────────────────────────────
@@ -79,11 +81,21 @@ export class TestsService {
         .catch((err) => console.error('Email error:', err));
     }
 
-    // 6. Return hasil
+    // 6. Auto-claim voucher (fire-and-forget, silent on error)
+    let hasVoucher = false;
+    try {
+      const claim = await this.vouchersService.claimVoucher(userId);
+      hasVoucher = !!claim;
+    } catch {
+      // Tidak perlu throw — user mungkin sudah claim, stok habis, atau fitur OFF
+    }
+
+    // 7. Return hasil
     return {
       personaPrimer,
       personaSekunder,
       reportToken,
+      hasVoucher,
       scores: {
         API: scores.API,
         AIR: scores.AIR,

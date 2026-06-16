@@ -6,7 +6,7 @@ export class AppController {
   healthCheck() {
     return {
       status: 'ok',
-      message: '4Persona Vundiego API is running 🚀',
+      message: '4Persona Vun Diego API is running 🚀',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
     };

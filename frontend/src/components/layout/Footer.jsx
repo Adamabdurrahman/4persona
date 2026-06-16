@@ -13,8 +13,8 @@ export default function Footer() {
   ];
 
   const socials = [
-    { label: 'Instagram', href: 'https://instagram.com/vundiego', icon: <InstagramIcon /> },
-    { label: 'TikTok',    href: 'https://tiktok.com/@vundiego',  icon: <TiktokIcon /> },
+    { label: 'Instagram', href: 'https://www.instagram.com/vundiegoforyou/', icon: <InstagramIcon /> },
+    { label: 'TikTok',    href: 'https://www.tiktok.com/@vundiegoforyou',  icon: <TiktokIcon /> },
   ];
 
   return (
@@ -47,7 +47,7 @@ export default function Footer() {
                 textDecoration: 'none',
               }}
             >
-              Vundiego
+              Vun Diego
             </Link>
             <p style={{
               marginTop: 'var(--space-2)',
@@ -142,7 +142,7 @@ export default function Footer() {
           gap: 'var(--space-4)',
         }}>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-light)' }}>
-            © {year} Vundiego. All rights reserved.
+            © {year} Vun Diego. All rights reserved.
           </p>
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-light)' }}>
             Dibuat dengan ❤ untuk menemukan dirimu

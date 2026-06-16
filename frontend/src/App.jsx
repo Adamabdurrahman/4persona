@@ -14,6 +14,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminQuestions from './pages/admin/AdminQuestions';
 import AdminResults from './pages/admin/AdminResults';
 import AdminTemplates from './pages/admin/AdminTemplates';
+import AdminVouchers from './pages/admin/AdminVouchers';
 
 function NotFoundPage() {
   return (
@@ -50,6 +51,7 @@ function AnimatedRoutes() {
           <Route path="questions" element={<AdminQuestions />} />
           <Route path="results" element={<AdminResults />} />
           <Route path="templates" element={<AdminTemplates />} />
+          <Route path="vouchers" element={<AdminVouchers />} />
         </Route>
 
         {/* ── 404 ────────────────────────────────────────── */}

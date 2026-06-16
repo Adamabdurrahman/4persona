@@ -48,7 +48,7 @@ export default function LoadingScreen({
               color: 'var(--color-text)',
               letterSpacing: '0.1em',
             }}>
-              Vundiego
+              Vun Diego
             </p>
             {element && config && (
               <p style={{

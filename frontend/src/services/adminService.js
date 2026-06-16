@@ -5,6 +5,11 @@ export const getAdminStats = async () => {
   return data;
 };
 
+export const updateAdminSales = async (count) => {
+  const { data } = await api.patch('/api/admin/sales', { count });
+  return data;
+};
+
 export const getAdminTemplates = async () => {
   const { data } = await api.get('/api/admin/templates');
   return data;
@@ -17,11 +22,6 @@ export const updateAdminTemplate = async (id, payload) => {
 
 export const getAdminResults = async (page = 1) => {
   const { data } = await api.get(`/api/admin/results?page=${page}`);
-  return data;
-};
-
-export const updateAdminSales = async (count) => {
-  const { data } = await api.patch('/api/admin/sales', { count });
   return data;
 };
 
@@ -50,3 +50,20 @@ export const toggleAdminQuestion = async (id) => {
   const { data } = await api.patch(`/api/questions/${id}/toggle`);
   return data;
 };
+
+// ─── Voucher Management ───────────────────────────────────
+export const getVoucherConfig = async () => {
+  const { data } = await api.get('/api/admin/vouchers/config');
+  return data;
+};
+
+export const updateVoucherConfig = async (payload) => {
+  const { data } = await api.put('/api/admin/vouchers/config', payload);
+  return data;
+};
+
+export const getVoucherClaims = async (page = 1) => {
+  const { data } = await api.get(`/api/admin/vouchers/claims?page=${page}`);
+  return data;
+};
+

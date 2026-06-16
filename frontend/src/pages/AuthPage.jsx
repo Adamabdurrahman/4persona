@@ -129,7 +129,7 @@ export default function AuthPage() {
               color: 'var(--color-text)',
               letterSpacing: '0.08em',
             }}>
-              Vundiego
+              Vun Diego
             </h1>
           </Link>
           <p style={{

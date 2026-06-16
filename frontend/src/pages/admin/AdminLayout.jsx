@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import { LayoutDashboard, HelpCircle, ClipboardList, FileText, Ticket } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: '📊', exact: true },
-  { to: '/admin/questions', label: 'Bank Soal', icon: '❓' },
-  { to: '/admin/results', label: 'Hasil Tes', icon: '📋' },
-  { to: '/admin/templates', label: 'Template Laporan', icon: '📄' },
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { to: '/admin/questions', label: 'Bank Soal', icon: HelpCircle },
+  { to: '/admin/results', label: 'Hasil Tes', icon: ClipboardList },
+  { to: '/admin/templates', label: 'Template Laporan', icon: FileText },
+  { to: '/admin/vouchers', label: 'Kelola Voucher', icon: Ticket },
 ];
 
 function SidebarContent({ user, location, onClose }) {
@@ -15,7 +17,7 @@ function SidebarContent({ user, location, onClose }) {
     <div style={{ width: 240, background: 'var(--color-text)', display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: '1.75rem 1.5rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xl)', fontWeight: 500, color: '#fff', letterSpacing: '0.05em' }}>Vundiego</p>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xl)', fontWeight: 500, color: '#fff', letterSpacing: '0.05em' }}>Vun Diego</p>
           <p style={{ fontSize: 'var(--text-xs)', color: 'rgba(255,255,255,0.35)', letterSpacing: 'var(--tracking-wider)', textTransform: 'uppercase', marginTop: '0.25rem' }}>Admin Panel</p>
         </div>
         {onClose && (
@@ -28,6 +30,7 @@ function SidebarContent({ user, location, onClose }) {
       <nav style={{ flex: 1, padding: '1rem 0.75rem' }}>
         {NAV_ITEMS.map(item => {
           const isActive = item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to);
+          const IconComponent = item.icon;
           return (
             <Link
               key={item.to}
@@ -44,7 +47,7 @@ function SidebarContent({ user, location, onClose }) {
                 borderLeft: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
               }}
             >
-              <span>{item.icon}</span>
+              <IconComponent size={18} style={{ opacity: isActive ? 1 : 0.7 }} />
               {item.label}
             </Link>
           );
@@ -79,6 +82,7 @@ export default function AdminLayout() {
   if (loading || !user?.isAdmin) return null;
 
   const currentPage = NAV_ITEMS.find(n => n.exact ? location.pathname === n.to : location.pathname.startsWith(n.to));
+  const CurrentIcon = currentPage?.icon;
 
   return (
     <>
@@ -103,8 +107,8 @@ export default function AdminLayout() {
         {/* Mobile Top Bar */}
         <div className="admin-topbar" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'var(--color-text)', display: 'none', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', zIndex: 100, boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>
           <button onClick={() => setDrawerOpen(true)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--radius-md)', color: '#fff', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, minHeight: 'unset' }}>☰</button>
-          <p style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-base)', color: '#fff', fontWeight: 500 }}>
-            {currentPage?.icon} {currentPage?.label || 'Admin'}
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-base)', color: '#fff', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            {CurrentIcon && <CurrentIcon size={18} />} {currentPage?.label || 'Admin'}
           </p>
           <div style={{ width: 36 }} />
         </div>
